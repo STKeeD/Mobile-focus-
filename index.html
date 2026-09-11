@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MobileFocus</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0b0d12;
+      color: white;
+      font-family: system-ui, sans-serif;
+    }
+
+    .app {
+      width: min(92%, 420px);
+      text-align: center;
+      padding: 35px 24px;
+      background: #151820;
+      border: 1px solid #292d38;
+      border-radius: 24px;
+    }
+
+    h1 { margin-top: 0; }
+    .subtitle { color: #9ca3af; }
+
+    .modes {
+      display: flex;
+      gap: 8px;
+      margin: 25px 0;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .modes button {
+      flex: 1;
+      background: #242833;
+      color: white;
+    }
+
+    .modes .active {
+      background: white;
+      color: #111;
+    }
+
+    #timer {
+      font-size: 64px;
+      font-weight: 800;
+      margin: 25px 0;
+      letter-spacing: -3px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .controls button {
+      flex: 1;
+    }
+
+    #start { background: white; color: #111; }
+    #reset { background: #242833; color: white; }
+
+    .stats {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #292d38;
+      color: #9ca3af;
+    }
+
+    #sessions {
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <h1>MobileFocus</h1>
+    <p class="subtitle">Focus on what matters.</p>
+
+    <div class="modes">
+      <button id="focusMode" class="active">Focus</button>
+      <button id="breakMode">Break</button>
+    </div>
+
+    <div id="timer">25:00</div>
+
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="reset">Reset</button>
+    </div>
+
+    <div class="stats">
+      Completed focus sessions:
+      <span id="sessions">0</span>
+    </div>
+  </main>
+
+  <script>
+    const timer = document.getElementById("timer");
+    const startButton = document.getElementById("start");
+    const resetButton = document.getElementById("reset");
+    const focusButton = document.getElementById("focusMode");
+    const breakButton = document.getElementById("breakMode");
+    const sessionsDisplay = document.getElementById("sessions");
+
+    let mode = "focus";
+    let seconds = 25 * 60;
+    let interval = null;
+    let sessions = Number(localStorage.getItem("mobileFocusSessions")) || 0;
+
+    sessionsDisplay.textContent = sessions;
+
+    function updateTimer() {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+
+      timer.textContent =
+        String(minutes).padStart(2, "0") +
+        ":" +
+        String(secs).padStart(2, "0");
+    }
+
+    function stopTimer() {
+      clearInterval(interval);
+      interval = null;
+      startButton.textContent = "Start";
+    }
+
+    function setMode(newMode) {
+      stopTimer();
+      mode = newMode;
+
+      if (mode === "focus") {
+        seconds = 25 * 60;
+        focusButton.classList.add("active");
+        breakButton.classList.remove("active");
+      } else {
+        seconds = 5 * 60;
+        breakButton.classList.add("active");
+        focusButton.classList.remove("active");
+      }
+
+      updateTimer();
+    }
+
+    startButton.addEventListener("click", () => {
+      if (interval) {
+        stopTimer();
+        return;
+      }
+
+      startButton.textContent = "Pause";
+
+      interval = setInterval(() => {
+        seconds--;
+
+        if (seconds <= 0) {
+          stopTimer();
+
+          if (mode === "focus") {
+            sessions++;
+            localStorage.setItem("mobileFocusSessions", sessions);
+            sessionsDisplay.textContent = sessions;
+          }
+
+          alert(mode === "focus"
+            ? "Focus session complete!"
+            : "Break complete!");
+
+          setMode(mode === "focus" ? "break" : "focus");
+          return;
+        }
+
+        updateTimer();
+      }, 1000);
+    });
+
+    resetButton.addEventListener("click", () => {
+      stopTimer();
+      seconds = mode === "focus" ? 25 * 60 : 5 * 60;
+      updateTimer();
+    });
+
+    focusButton.addEventListener("click", () => setMode("focus"));
+    breakButton.addEventListener("click", () => setMode("break"));
+
+    updateTimer();
+  </script>
+</body>
+  </html>
